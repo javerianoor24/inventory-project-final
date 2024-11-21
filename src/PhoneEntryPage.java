@@ -10,6 +10,7 @@ class phoneEntryPage extends JFrame {
     private JTextField descriptionField;
     private JTextField priceField;
     private JTextField colorField;
+    private JTextField quantityField;
 
     public phoneEntryPage() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -88,9 +89,19 @@ class phoneEntryPage extends JFrame {
         colorField.setBounds(300, 300, 400, 30);
         contentPane.add(colorField);
 
+        JLabel quantityLabel = new JLabel("Quantity:");
+        quantityLabel.setForeground(Color.WHITE);
+        quantityLabel.setFont(new Font("Helvetica", Font.PLAIN, 18));
+        quantityLabel.setBounds(150, 350, 100, 30);
+        contentPane.add(quantityLabel);
+
+        quantityField = new JTextField();
+        quantityField.setBounds(300, 350, 400, 30);
+        contentPane.add(quantityField);
+
         // Submit Button
         JButton submitButton = new JButton("Submit");
-        submitButton.setBounds(350, 370, 200, 50);
+        submitButton.setBounds(350, 400, 200, 50);
         submitButton.setFont(new Font("Helvetica", Font.BOLD, 20));
         contentPane.add(submitButton);
 
@@ -108,26 +119,79 @@ class phoneEntryPage extends JFrame {
         String description = descriptionField.getText();
         String price = priceField.getText();
         String color = colorField.getText();
+        String quantityStr = quantityField.getText();
+        int quantity;
 
-        // Your provided connection string
+        // Validation: Ensure no fields are empty
+        if (name.isEmpty() || description.isEmpty() || price.isEmpty() || color.isEmpty() || quantityStr.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "All fields are required!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validation: Ensure the name contains only letters or alphanumeric characters
+        if (!name.matches("^[a-zA-Z]+[a-zA-Z0-9]*$")) {
+            JOptionPane.showMessageDialog(this, "Name must start with a letter and can only contain letters and numbers.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validation: Ensure quantity is a positive integer
+        try {
+            quantity = Integer.parseInt(quantityStr);
+            if (quantity <= 0) {
+                JOptionPane.showMessageDialog(this, "Quantity must be greater than 0!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid quantity. Please enter a valid number.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validation: Ensure price is numeric with optional decimal
+        if (!price.matches("^[0-9]+(\\.[0-9]{1,2})?$")) {
+            JOptionPane.showMessageDialog(this, "Price must be a numeric value with up to two decimal places.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validation: Ensure color contains only alphabetic characters
+        if (!color.matches("^[a-zA-Z]+$")) {
+            JOptionPane.showMessageDialog(this, "Color must only contain alphabetic characters.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Database connection details
         String url = "jdbc:sqlserver://Javeria\\SQLEXPRESS;databaseName=SCD;encrypt=false;trustServerCertificate=true;user=Javeria;password=JAVERIANOOR123";
 
-        String sql = "INSERT INTO phones (name, description, price, colour) VALUES (" +
-                "'" + nameField.getText() + "', " +
-                "'" + descriptionField.getText() + "', " +
-                "'" + priceField.getText() + "', " +
-                "'" + colorField.getText() + "')";
-
-        try (Connection connection = DriverManager.getConnection(url))
-        {
+        try (Connection connection = DriverManager.getConnection(url)) {
             Statement statement = connection.createStatement();
+
+            // Validation: Check for duplicate phone name
+            String checkDuplicateSQL = "SELECT * FROM phones WHERE name = '" + name + "'";
+            ResultSet resultSet = statement.executeQuery(checkDuplicateSQL);
+            if (resultSet.next()) {
+                JOptionPane.showMessageDialog(this, "Phone name already exists! Please use a unique name.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Insert phone details into the database
+            String sql = "INSERT INTO phones (name, description, price, colour, quantity) VALUES (" +
+                    "'" + name + "', " +
+                    "'" + description + "', " +
+                    "'" + price + "', " +
+                    "'" + color + "', " +
+                    quantity + ")";
+
             statement.executeUpdate(sql);
-            connection.close();
-            JOptionPane.showMessageDialog(null, "phone Inserted into Inventory");
+            JOptionPane.showMessageDialog(null, "Phone inserted into inventory successfully!");
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Database Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            phoneEntryPage frame = new phoneEntryPage();
+            frame.setVisible(true);
+        });
+    }
 }
