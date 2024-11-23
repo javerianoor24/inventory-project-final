@@ -11,7 +11,7 @@ class WelcomePage extends JFrame {
         setBounds(100, 100, 900, 800);
 
         // Load the background image
-        Image backgroundImage = new ImageIcon("C:\\Users\\javer\\Downloads\\background.jpg.jpg").getImage();
+        Image backgroundImage = new ImageIcon("C:\\Users\\javer\\OneDrive\\Pictures\\gradient-connection-background_23-2150462053.jpg").getImage();
 
         // Set up the content pane
         contentPane = new JPanel() {
